@@ -1,0 +1,20 @@
+#!/usr/bin/ksh
+
+# Available memory
+memory=`/usr/sbin/prtconf | grep Memory | head -1 | awk 'BEGIN {FS=" "} {print $3}'`
+gb_memory=`echo "scale=2; $memory/1024" | bc -l`
+
+# Free memory
+pagesize=`pagesize`
+kb_pagesize=`echo "scale=2; $pagesize/1024" | bc -l`
+sar_freemem=`sar -r 1 1 | tail -1 | awk 'BEGIN {FS=" "} {print $2}'`
+gb_freemem=`echo "scale=2; $kb_pagesize*$sar_freemem/1024/1024" | bc -l`
+
+# Used Memory
+gb_usedmem=`echo "scale=2; $gb_memory-$gb_freemem" | bc -l`
+
+# Conclusion
+echo "Avai Mem: $gb_memory GB"
+echo "Free Mem: $gb_freemem GB"
+echo "Used Mem: $gb_usedmem GB"
+

@@ -1,0 +1,18 @@
+SHOW DATABASE 'SVIP201' 'InconsistentProperties';
+
+SHOW DATABASE 'SVIP201' 'InconsistentLogXptProps';
+SHOW DATABASE 'SVIP101' 'InconsistentLogXptProps';
+
+SHOW DATABASE 'SVIP201' 'TopWaitEvents';
+
+SHOW DATABASE 'SVIP101' 'LogXptStatus';
+SHOW DATABASE 'SVIP201' 'LogXptStatus';
+
+EDIT DATABASE 'EPROD_DG' SET STATE='APPLY-OFF' ;
+EDIT DATABASE 'EPROD_DG' SET STATE='APPLY-ON' with apply instance='EPROD1'; 
+
+EDIT DATABASE 'wdmp101' SET PROPERTY 'ArchiveLagTarget'=900;
+
+
+EDIT DATABASE 'prdbic' SET STATE='TRANSPORT-ON' ;
+

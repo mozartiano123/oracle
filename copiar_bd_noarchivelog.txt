@@ -1,0 +1,221 @@
+SQL> startup nomount pfile='initRMAN11.ora';
+ORACLE instance started.
+
+Total System Global Area 8551575552 bytes
+Fixed Size                  2270360 bytes
+Variable Size            2164263784 bytes
+Database Buffers         6358564864 bytes
+Redo Buffers               26476544 bytes
+SQL> alter ^C
+
+SQL> show parameter control
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+_fix_control                         string      18960760:on
+control_file_record_keep_time        integer     30
+control_files                        string      /u02/RMAN11/controlfile/o1_mf_
+                                                 cjcoxoh7_.ctl
+control_management_pack_access       string      DIAGNOSTIC+TUNING
+SQL> alter database mount;
+
+Database altered.
+
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+[oracle@corpprduxoda2-vm dbs]$ cd /u02/
+lost+found/ RMAN11/
+[oracle@corpprduxoda2-vm dbs]$ cd /u02/RMAN11/
+[oracle@corpprduxoda2-vm RMAN11]$ ls -l
+total 12
+drwxr-xr-x 2 oracle oinstall 4096 May  4 17:40 controlfile
+drwxr-xr-x 2 oracle oinstall 4096 May  4 17:37 datafile
+drwxr-xr-x 2 oracle oinstall 4096 May  4 17:37 redo
+[oracle@corpprduxoda2-vm RMAN11]$ cd  controlfile/
+[oracle@corpprduxoda2-vm RMAN11]$ cd datafile/
+[oracle@corpprduxoda2-vm datafile]$ ls -ltrs
+total 5671924
+1049612 -rw-r----- 1 oracle oinstall 1073750016 May  4 17:11 o1_mf_sysaux_cjcoy298_.dbf
+1049612 -rw-r----- 1 oracle oinstall 1073750016 May  4 17:12 o1_mf_system_cjcoxy2r_.dbf
+2201712 -rw-r----- 1 oracle oinstall 2252349440 May  4 17:17 o1_mf_tbs_rman_cjcq6nbp_.dbf
+ 205012 -rw-r----- 1 oracle oinstall  209723392 May  4 17:17 o1_mf_temp_cjcoy7bt_.tmp
+ 369012 -rw-r----- 1 oracle oinstall  377495552 May  4 17:18 o1_mf_undotbs1_cjcoy5nz_.dbf
+ 694452 -rw-r----- 1 oracle oinstall  710418432 May  4 17:18 o1_mf_users_cjcoygmb_.dbf
+ 102512 -rw-r----- 1 oracle oinstall  104865792 May  4 17:18 tbs_expdp.dbf
+[oracle@corpprduxoda2-vm datafile]$ pwd
+/u02/RMAN11/datafile
+[oracle@corpprduxoda2-vm datafile]$ rman target /
+
+Recovery Manager: Release 11.2.0.4.0 - Production on Tue May 4 18:05:47 2021
+
+Copyright (c) 1982, 2011, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: RMAN (DBID=1794925829, not open)
+
+RMAN> catalog start with '/orareco1/NFEPRD/datafile/';
+
+using target database control file instead of recovery catalog
+searching for all files that match the pattern /u02/RMAN11/datafile/
+
+List of Files Unknown to the Database
+=====================================
+File Name: /u02/RMAN11/datafile/o1_mf_sysaux_cjcoy298_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_temp_cjcoy7bt_.tmp
+File Name: /u02/RMAN11/datafile/tbs_expdp.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_users_cjcoygmb_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_undotbs1_cjcoy5nz_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_system_cjcoxy2r_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_tbs_rman_cjcq6nbp_.dbf
+
+Do you really want to catalog the above files (enter YES or NO)? yes
+cataloging files...
+cataloging done
+
+List of Cataloged Files
+=======================
+File Name: /u02/RMAN11/datafile/o1_mf_sysaux_cjcoy298_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_temp_cjcoy7bt_.tmp
+File Name: /u02/RMAN11/datafile/tbs_expdp.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_users_cjcoygmb_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_undotbs1_cjcoy5nz_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_system_cjcoxy2r_.dbf
+File Name: /u02/RMAN11/datafile/o1_mf_tbs_rman_cjcq6nbp_.dbf
+
+RMAN> switch database to copy;
+
+datafile 1 switched to datafile copy "/u02/RMAN11/datafile/o1_mf_system_cjcoxy2r_.dbf"
+datafile 2 switched to datafile copy "/u02/RMAN11/datafile/o1_mf_sysaux_cjcoy298_.dbf"
+datafile 3 switched to datafile copy "/u02/RMAN11/datafile/o1_mf_undotbs1_cjcoy5nz_.dbf"
+datafile 4 switched to datafile copy "/u02/RMAN11/datafile/o1_mf_users_cjcoygmb_.dbf"
+datafile 5 switched to datafile copy "/u02/RMAN11/datafile/o1_mf_tbs_rman_cjcq6nbp_.dbf"
+datafile 6 switched to datafile copy "/u02/RMAN11/datafile/tbs_expdp.dbf"
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.4.0 Production on Tue May 4 18:06:20 2021
+
+Copyright (c) 1982, 2013, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> select member from v$logfile;
+
+MEMBER
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log4a.rdo
+/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log5a.rdo
+/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log6a.rdo
+
+SQL>
+SQL>
+SQL>
+SQL> !
+[oracle@corpprduxoda2-vm datafile]$ cd /
+[oracle@corpprduxoda2-vm datafile]$ cd ..
+[oracle@corpprduxoda2-vm RMAN11]$ cd redo/
+[oracle@corpprduxoda2-vm redo]$ ls -l
+total 307524
+-rw-r----- 1 oracle oinstall 104858112 May  4 17:19 log4a.rdo
+-rw-r----- 1 oracle oinstall 104858112 May  4 17:19 log5a.rdo
+-rw-r----- 1 oracle oinstall 104858112 May  4 17:20 log6a.rdo
+[oracle@corpprduxoda2-vm redo]$ pwd
+/u02/RMAN11/redo
+[oracle@corpprduxoda2-vm redo]$ sqlp
+[oracle@corpprduxoda2-vm redo]$ exit
+exit
+
+SQL> alter database rename file '/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log4a.rdo' to '/u02/RMAN11/redo/log4a.rdo';
+
+Database altered.
+
+SQL> alter database rename file '/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log5a.rdo' to '/u02/RMAN11/redo/log5a.rdo';
+
+Database altered.
+
+SQL> alter database rename file '/u01/app/oracle/oradata/datastore/RMAN/RMAN/onlinelog/log6a.rdo' to '/u02/RMAN11/redo/log6a.rdo';
+
+Database altered.
+
+SQL> select member from v$tempfile;
+select member from v$tempfile
+       *
+ERROR at line 1:
+ORA-00904: "MEMBER": invalid identifier
+
+
+SQL> select name from v$tempfile;
+
+NAME
+--------------------------------------------------------------------------------
+/u02/app/oracle/oradata/datastore/.ACFS/snaps/RMAN/RMAN/datafile/o1_mf_temp_cjco
+y7bt_.tmp
+
+
+SQL> alter^C
+
+SQL> set linesize 300
+SQL> /
+
+NAME
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+/u02/app/oracle/oradata/datastore/.ACFS/snaps/RMAN/RMAN/datafile/o1_mf_temp_cjcoy7bt_.tmp
+
+SQL> alter database rename file '/u02/app/oracle/oradata/datastore/.ACFS/snaps/RMAN/RMAN/datafile/o1_mf_temp_cjcoy7bt_.tmp' to '/u02/RMAN11/datafile/o1_mf_temp_cjcoy7bt_.tmp';
+
+Database altered.
+
+SQL> !
+[oracle@corpprduxoda2-vm datafile]$ ls -ltrs /u02/RMAN11/datafile/o1_mf_temp_cjcoy7bt_.tmp
+205012 -rw-r----- 1 oracle oinstall 209723392 May  4 17:17 /u02/RMAN11/datafile/o1_mf_temp_cjcoy7bt_.tmp
+[oracle@corpprduxoda2-vm datafile]$ exit
+exit
+
+SQL> alter database open;
+
+Database altered.
+
+SQL> exit
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$ ps -ef | grep pmon
+oracle   12478     1  0 18:05 ?        00:00:00 ora_pmon_RMAN11
+oracle   12591 12431  0 18:08 pts/3    00:00:00 grep pmon
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$
+[oracle@corpprduxoda2-vm datafile]$ lsnrctl status
+
+LSNRCTL for Linux: Version 11.2.0.4.0 - Production on 04-MAY-2021 18:08:31
+
+Copyright (c) 1991, 2013, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=IPC)(KEY=EXTPROC1)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 12.1.0.2.0 - Production
+Start Date                04-MAY-2021 18:04:42
+Uptime                    0 days 0 hr. 3 min. 48 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /u01/app/oracle/product/12.1.0.2/dbhome_1/network/admin/listener.ora
+Listener Log File         /u01/app/oracle/diag/tnslsnr/corpprduxoda2-vm/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=10.6.1.132)(PORT=1521)))
+Services Summary...
+Service "RMAN" has 1 instance(s).
+  Instance "RMAN11", status READY, has 1 handler(s) for this service...

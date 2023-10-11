@@ -1,0 +1,241 @@
+Install 19c
+
+################### pre steps as root ###########################
+
+yum update -y
+
+[root@oracle19c yum.repos.d]# yum install oracle-database-preinstall-19c.x86_64 -y
+
+[root@oracle19c yum.repos.d]# echo "none                    /dev/shm                tmpfs   defaults,size=8G 0 0" >> /etc/fstab
+[root@oracle19c yum.repos.d]# echo "/dev/sdq1 none swap defaults 0 0" >> /etc/fstab
+[root@oracle19c yum.repos.d]# mount -o remount /dev/shm
+[root@oracle19c yum.repos.d]# mkswap /dev/sdu1
+[root@oracle19c yum.repos.d]# swapon /dev/sdu1
+
+[root@oracle19c yum.repos.d]# grep MemTotal /proc/meminfo
+MemTotal:        8144300 kB
+[root@oracle19c yum.repos.d]# grep SwapTotal /proc/meminfo
+SwapTotal:       7553020 kB
+[root@oracle19c yum.repos.d]# df -h /tmp
+Filesystem           Size  Used Avail Use% Mounted on
+/dev/mapper/ol-root   43G  3.8G   40G   9% /
+
+
+
+# criar contas e grupos faltantes
+[root@oracle19c yum.repos.d]# groupadd -g 54327 asmdba
+[root@oracle19c yum.repos.d]# groupadd -g 54328 asmoper
+[root@oracle19c yum.repos.d]# groupadd -g 54329 asmadmin
+[oracle@oracle19c ~]$ useradd -u 54323 -g oinstall -G asmadmin,asmdba,asmoper,dba grid
+root@oracle19c yum.repos.d]# passwd grid
+root@oracle19c yum.repos.d]# passwd oracle
+
+P0Chuman_
+
+#check limits and create limits for grid.
+[root@oracle19c yum.repos.d]# cat /etc/security/limits.d/oracle-database-preinstall-19c.conf
+
+# copy file to a new file and modify based on search criteria using sed.
+[root@oracle19c yum.repos.d]# cat /etc/security/limits.d/oracle-database-preinstall-19c.conf | sed 's/oracle/grid /g' > /etc/security/limits.d/oracle-grid-user-preinstall-19c.conf
+
+#mount oracle home
+[root@vm-sirwebprod-eus2-01 /]# lsblk
+[root@vm-sirwebprod-eus2-01 /]# parted -s /dev/sdp mklabel gpt
+[root@vm-sirwebprod-eus2-01 /]# parted -s /dev/sdp mkpart primary ext4 1MiB 99GiB
+[root@vm-sirwebprod-eus2-01 /]# sudo mkfs.ext4 /dev/sdp1
+[root@vm-sirwebprod-eus2-01 /]# echo "/dev/sdp1                    /u01                ext4 defaults 0 2" >> /etc/fstab
+[root@vm-sirwebprod-eus2-01 /]# mkdir /u01
+[root@vm-sirwebprod-eus2-01 /]# mount -a
+[root@vm-sirwebprod-eus2-01 /]# systemctl daemon-reload
+
+
+# create dirs
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/19.0.0/grid
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oraInventory
+[root@oracle19c yum.repos.d]# chown -R grid:oinstall /u01/app/
+[root@oracle19c yum.repos.d]# chown -R grid:oinstall /u01/app/oraInventory/
+[root@oracle19c yum.repos.d]# chmod -R 775 /u01/app
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oracle/product/19.0.0/dbhome_1
+[root@oracle19c yum.repos.d]# chown -R oracle:oinstall /u01/app/oracle
+[root@oracle19c yum.repos.d]# chmod -R 775 /u01/app/oracle
+
+#install ASMLIB
+[root@oracle19c yum.repos.d]# yum -y install oracleasm-support
+#* to install oracleasm-support the repository Addons must be enabled.
+[root@oracle19c yum.repos.d]# yum -y install kmod-oracleasm
+[root@oracle19c ~]# yum localinstall /tmp/oracleasmlib-2.0.17-1.el8.x86_64.rpm -y
+
+[root@oracle19c ~]# /usr/sbin/oracleasm configure -i
+Configuring the Oracle ASM library driver.
+
+This will configure the on-boot properties of the Oracle ASM library
+driver.  The following questions will determine whether the driver is
+loaded on boot and what permissions it will have.  The current values
+will be shown in brackets ('[]').  Hitting <ENTER> without typing an
+answer will keep that current value.  Ctrl-C will abort.
+
+Default user to own the driver interface []: grid
+Default group to own the driver interface []: asmadmin
+Start Oracle ASM library driver on boot (y/n) [n]: y
+Scan for Oracle ASM disks on boot (y/n) [y]: y
+Writing Oracle ASM library driver configuration: done
+
+[root@oracle19c ~]# /usr/sbin/oracleasm init
+Creating /dev/oracleasm mount point: /dev/oracleasm
+Loading module "oracleasm": oracleasm
+Configuring "oracleasm" to use device physical block size
+Mounting ASMlib driver filesystem: /dev/oracleasm
+
+# partition all the disks.
+
+parted -s /dev/sdd mklabel gpt
+parted -s /dev/sde mklabel gpt
+parted -s /dev/sdf mklabel gpt
+parted -s /dev/sdg mklabel gpt
+parted -s /dev/sdh mklabel gpt
+parted -s /dev/sdi mklabel gpt
+parted -s /dev/sdj mklabel gpt
+parted -s /dev/sdk mklabel gpt
+parted -s /dev/sdl mklabel gpt
+parted -s /dev/sdm mklabel gpt
+parted -s /dev/sdn mklabel gpt
+parted -s /dev/sdo mklabel gpt
+
+
+parted -s /dev/sdd mkpart primary ext4 1MiB ... 
+parted -s /dev/sdg mkpart primary ext4 1MiB ...
+parted -s /dev/sdf mkpart primary ext4 1MiB ...
+parted -s /dev/sdh mkpart primary ext4 1MiB ...
+parted -s /dev/sde mkpart primary ext4 1MiB ...
+parted -s /dev/sdi mkpart primary ext4 1MiB ...
+parted -s /dev/sdj mkpart primary ext4 1MiB ...
+parted -s /dev/sdk mkpart primary ext4 1MiB ...
+parted -s /dev/sdl mkpart primary ext4 1MiB ...
+parted -s /dev/sdm mkpart primary ext4 1MiB ...
+parted -s /dev/sdn mkpart primary ext4 1MiB ...
+parted -s /dev/sdo mkpart primary ext4 1MiB ...
+
+
+
+[root@oracle19c ~]# fdisk /dev/sdb
+
+Welcome to fdisk (util-linux 2.32.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Device does not contain a recognized partition table.
+Created a new DOS disklabel with disk identifier 0x35c2b225.
+
+Command (m for help): p
+Disk /dev/sdb: 6 GiB, 6442450944 bytes, 12582912 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x35c2b225
+
+Command (m for help): n
+Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p): p
+Partition number (1-4, default 1):
+First sector (2048-12582911, default 2048):
+Last sector, +sectors or +size{K,M,G,T,P} (2048-12582911, default 12582911):
+
+Created a new partition 1 of type 'Linux' and of size 6 GiB.
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+
+
+# add the disks to asm.
+
+/usr/sbin/oracleasm createdisk DATA1 /dev/sdc1
+/usr/sbin/oracleasm createdisk DATA2 /dev/sdd1
+/usr/sbin/oracleasm createdisk DATA3 /dev/sde1
+/usr/sbin/oracleasm createdisk DATA4 /dev/sdf1
+/usr/sbin/oracleasm createdisk DATA5 /dev/sdg1
+/usr/sbin/oracleasm createdisk DATA6 /dev/sdh1
+/usr/sbin/oracleasm createdisk DATA7 /dev/sdi1
+/usr/sbin/oracleasm createdisk FRA1 /dev/sdj1
+/usr/sbin/oracleasm createdisk REDO11 /dev/sdk1
+/usr/sbin/oracleasm createdisk REDO12 /dev/sdl1
+/usr/sbin/oracleasm createdisk REDO13 /dev/sdm1
+/usr/sbin/oracleasm createdisk REDO14 /dev/sdn1
+/usr/sbin/oracleasm createdisk REDO21 /dev/sdo1
+/usr/sbin/oracleasm createdisk REDO22 /dev/sdp1
+/usr/sbin/oracleasm createdisk REDO23 /dev/sdq1
+/usr/sbin/oracleasm createdisk REDO24 /dev/sdr1
+
+
+[root@oracle19c ~]# /usr/sbin/oracleasm createdisk DATA1 /dev/sdb1
+Writing disk header: done
+Instantiating disk: done
+
+...
+
+[root@oracle19c ~]# /usr/sbin/oracleasm listdisks
+DATA1
+DATA2
+DATA3
+FRA1
+
+[root@oracle19c ~]# ls -lh /dev/oracleasm/disks/
+total 0
+brw-rw----. 1 grid asmadmin 8, 17 Jul 23 01:31 DATA1
+brw-rw----. 1 grid asmadmin 8, 33 Jul 23 01:32 DATA2
+brw-rw----. 1 grid asmadmin 8, 49 Jul 23 01:32 DATA3
+brw-rw----. 1 grid asmadmin 8, 65 Jul 23 01:32 FRA1
+
+
+
+# install  grid
+su - grid
+
+[grid@vm-huprod-eus2-01 grid]$ export GRID_HOME=/u01/app/19.0.0/grid
+[grid@vm-huprod-eus2-01 grid]$ export $ORA_INVENTORY=/u01/app/oraInventory
+[grid@vm-huprod-eus2-01 grid]$ export CV_ASSUME_DISTID=OEL7.8
+[grid@vm-huprod-eus2-01 grid]$ cd $GRID_HOME 
+[grid@vm-huprod-eus2-01 grid]$ unzip /temp_data/install19c/OracleDatabaseGridInfrastructure19.zip
+[grid@vm-huprod-eus2-01 grid]$ vi grid_install.rsp
+[grid@vm-huprod-eus2-01 grid]$ $GRID_HOME/runcluvfy.sh stage -pre hacfg
+[grid@vm-huprod-eus2-01 grid]$ $GRID_HOME/gridSetup.sh -ignorePrereq -waitforcompletion -silent -responseFile $GRID_HOME/grid_install.rsp
+
+
+As a root user, execute the following script(s):
+        1. $ORA_INVENTORY/orainstRoot.sh
+        2. $GRID_HOME/root.sh
+
+[grid@vm-huprod-eus2-01 grid]$ $GRID_HOME/gridSetup.sh -executeConfigTools -responseFile $GRID_HOME/grid_install.rsp -silent
+
+
+# install  db
+
+su - oracle
+
+[oracle@vm-huprod-eus2-01 ~]$ export ORACLE_HOME=/u01/app/oracle/product/19.0.0/dbhome_1/
+[oracle@vm-huprod-eus2-01 ~]$ export ORA_INVENTORY=/u01/app/oraInventory
+[oracle@vm-huprod-eus2-01 ~]$ export CV_ASSUME_DISTID=OEL7.8
+[oracle@vm-huprod-eus2-01 ~]$ cd $ORACLE_HOME
+[oracle@vm-huprod-eus2-01 ~]$ unzip /temp_data/install19c/OracleDatabase19.zip
+[oracle@vm-huprod-eus2-01 ~]$ vi db_install.rsp
+[oracle@vm-huprod-eus2-01 ~]$ $ORACLE_HOME/runInstaller -ignorePrereq -silent -responseFile  $ORACLE_HOME/db_install.rsp
+
+As a root user, execute the following script(s):
+        1.$ORACLE_HOME/root.sh
+
+
+
+#patch grid and db.
+
+as oracle
+[oracle@vm-huprod-eus2-01 ~]$ rm -rf $ORACLE_HOME/OPatch
+[oracle@vm-huprod-eus2-01 ~]$ cp -r /temp_data/install19c/patch/OPatch/ $ORACLE_HOME/
+
+as grid
+
+[grid@vm-huprod-eus2-01 ~]$ rm -rf $GRID_HOME/OPatch
+[grid@vm-huprod-eus2-01 ~]$ cp -r /temp_data/install19c/patch/OPatch/ $ORACLE_HOME/

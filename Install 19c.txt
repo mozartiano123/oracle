@@ -1,0 +1,207 @@
+Install 19c
+
+################### pre steps as root ###########################
+
+yum update -y
+
+[root@oracle19c yum.repos.d]# yum install oracle-database-preinstall-19c.x86_64 -y
+
+[root@oracle19c yum.repos.d]# echo "none                    /dev/shm                tmpfs   defaults,size=6G 0 0" > /etc/fstab
+[root@oracle19c yum.repos.d]# mount -o remount /dev/shm
+
+[root@oracle19c yum.repos.d]# grep MemTotal /proc/meminfo
+MemTotal:        8144300 kB
+[root@oracle19c yum.repos.d]# grep SwapTotal /proc/meminfo
+SwapTotal:       7553020 kB
+[root@oracle19c yum.repos.d]# df -h /tmp
+Filesystem           Size  Used Avail Use% Mounted on
+/dev/mapper/ol-root   43G  3.8G   40G   9% /
+
+# criar contas e grupos faltantes
+[root@oracle19c yum.repos.d]# groupadd -g 54327 asmdba
+[root@oracle19c yum.repos.d]# groupadd -g 54328 asmoper
+[root@oracle19c yum.repos.d]# groupadd -g 54329 asmadmin
+[oracle@oracle19c ~]$ useradd -u 54323 -g oinstall -G asmadmin,asmdba,asmoper,dba,racdba grid
+[oracle@oracle19c ~]$ usermod -a -G asmdba oracle
+root@oracle19c yum.repos.d]# passwd grid
+root@oracle19c yum.repos.d]# passwd oracle
+
+#check limits and create limits for grid.
+[root@oracle19c yum.repos.d]# cat /etc/security/limits.d/oracle-database-preinstall-19c.conf
+
+# copy file to a new file and modify based on search criteria using sed.
+[root@oracle19c yum.repos.d]# cat /etc/security/limits.d/oracle-database-preinstall-19c.conf | sed 's/oracle/grid /g' > /etc/security/limits.d/oracle-grid-user-preinstall-19c.conf
+
+# create dirs
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oracle
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oracle/product/19.0.0/grid
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oraInventory
+[root@oracle19c yum.repos.d]# mkdir -p /u01/app/oracle/product/19.0.0/dbhome_1
+[root@oracle19c yum.repos.d]# chown -R oracle:oinstall /u01/app/oracle/
+[root@oracle19c yum.repos.d]# chown -R grid:oinstall /u01/app/oraInventory/
+[root@oracle19c yum.repos.d]# chown -R grid:oinstall /u01/app/oracle/product/19.0.0/grid
+[root@oracle19c yum.repos.d]# chmod -R 775 /u01/app
+
+#install ASMLIB
+[root@oracle19c yum.repos.d]# yum -y install oracleasm-support
+#* to install oracleasm-support the repository Addons must be enabled.
+[root@oracle19c yum.repos.d]# yum -y install kmod-oracleasm
+[root@oracle19c ~]# yum localinstall /tmp/oracleasmlib-2.0.17-1.el8.x86_64.rpm -y
+
+[root@oracle19c ~]# /usr/sbin/oracleasm configure -i
+Configuring the Oracle ASM library driver.
+
+This will configure the on-boot properties of the Oracle ASM library
+driver.  The following questions will determine whether the driver is
+loaded on boot and what permissions it will have.  The current values
+will be shown in brackets ('[]').  Hitting <ENTER> without typing an
+answer will keep that current value.  Ctrl-C will abort.
+
+Default user to own the driver interface []: grid
+Default group to own the driver interface []: asmadmin
+Start Oracle ASM library driver on boot (y/n) [n]: y
+Scan for Oracle ASM disks on boot (y/n) [y]: y
+Writing Oracle ASM library driver configuration: done
+
+[root@oracle19c ~]# /usr/sbin/oracleasm init
+Creating /dev/oracleasm mount point: /dev/oracleasm
+Loading module "oracleasm": oracleasm
+Configuring "oracleasm" to use device physical block size
+Mounting ASMlib driver filesystem: /dev/oracleasm
+
+# partition all the disks.
+
+[root@oracle19c ~]# fdisk /dev/sdb
+
+Welcome to fdisk (util-linux 2.32.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+Device does not contain a recognized partition table.
+Created a new DOS disklabel with disk identifier 0x35c2b225.
+
+Command (m for help): p
+Disk /dev/sdb: 6 GiB, 6442450944 bytes, 12582912 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x35c2b225
+
+Command (m for help): n
+Partition type
+   p   primary (0 primary, 0 extended, 4 free)
+   e   extended (container for logical partitions)
+Select (default p): p
+Partition number (1-4, default 1):
+First sector (2048-12582911, default 2048):
+Last sector, +sectors or +size{K,M,G,T,P} (2048-12582911, default 12582911):
+
+Created a new partition 1 of type 'Linux' and of size 6 GiB.
+
+Command (m for help): w
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+
+
+# add the disks to asm.
+
+[root@oracle19c ~]# /usr/sbin/oracleasm createdisk DATA1 /dev/sdb1
+Writing disk header: done
+Instantiating disk: done
+
+...
+
+[root@oracle19c ~]# /usr/sbin/oracleasm listdisks
+DATA1
+DATA2
+DATA3
+FRA1
+
+[root@oracle19c ~]# ls -lh /dev/oracleasm/disks/
+total 0
+brw-rw----. 1 grid asmadmin 8, 17 Jul 23 01:31 DATA1
+brw-rw----. 1 grid asmadmin 8, 33 Jul 23 01:32 DATA2
+brw-rw----. 1 grid asmadmin 8, 49 Jul 23 01:32 DATA3
+brw-rw----. 1 grid asmadmin 8, 65 Jul 23 01:32 FRA1
+
+
+
+#################### install  grid ######################################
+#################### root steps #########################################
+[root@oracle19c ~]# cd /u01/app/oracle/product/19.0.0/grid
+[root@oracle19c grid]# unzip -q LINUX.X64_193000_grid_home.zip
+
+[root@oracle19c ~]# chown -R oracle:oinstall /u01/app/oracle/
+[root@oracle19c ~]# chown -R grid:oinstall /u01/app/oraInventory/
+[root@oracle19c ~]# chown -R grid:oinstall /u01/app/oracle/product/19.0.0/grid
+[root@oracle19c ~]# chmod -R 775 /u01/app
+
+
+
+#Optionally use the ASMFD
+
+[root@oracle19c grid]# export ORACLE_HOME=/u01/app/oracle/product/19.0.0/grid
+[root@oracle19c grid]# export ORACLE_BASE=/u01/app/oracle
+# cd /u01/app/oracle/product/19.0.0/grid/bin
+# ./asmcmd afd_label DATA1 /dev/sdb --init
+# ./asmcmd afd_label DATA2 /dev/sdc --init
+# ./asmcmd afd_label DATA3 /dev/sdd --init
+
+# ./asmcmd afd_lslbl /dev/sdb
+# ./asmcmd afd_lslbl /dev/sdc
+# ./asmcmd afd_lslbl /dev/sdd
+
+#################### grid steps #########################################
+
+[grid@oracle19c ~]# export DISPLAY=192.168.1.119:0.0
+[grid@oracle19c grid]$ /u01/app/oracle/product/19.0.0/grid/gridSetup.sh
+
+#if the error INS-08101 appears, the following workaround is required:
+[grid@oracle19c grid]$ export CV_ASSUME_DISTID=OEL8.1
+
+#After installing software only, lauch gridSetup again and do the configuration.
+[grid@oracle19c grid]$ /u01/app/oracle/product/19.0.0/grid/gridSetup.sh
+
+
+#################### DB steps #########################################
+[oracle@oracle19c ~]$ cd /u01/app/oracle/product/19.0.0/dbhome_1
+[grid@oracle19c ~]# export DISPLAY=192.168.1.119:0.0
+[oracle@oracle19c dbhome_1]$ ./runInstaller
+
+#if the error INS-08101 appears, the following workaround is required:
+[grid@oracle19c grid]$ export CV_ASSUME_DISTID=OEL8.1
+
+################## Manually creating DB #############################
+
+create database ORCL
+    character set AL32UTF8
+    national character set UTF8
+    controlfile reuse
+    user sys identified by oadmin0
+    user system identified by oadmin0
+    maxlogfiles  128
+    maxlogmembers 4
+    maxloghistory 6300
+    maxdatafiles 200
+    logfile
+      GROUP 1 ('+DATA', '+FRA') SIZE 200M,
+      GROUP 2 ('+DATA', '+FRA') SIZE 200M,
+      GROUP 3 ('+DATA', '+FRA') SIZE 200M
+    datafile SIZE 2G
+    EXTENT MANAGEMENT LOCAL
+    sysaux datafile SIZE 6G
+    default temporary tablespace TEMP TEMPFILE SIZE 1G AUTOEXTEND ON
+    DEFAULT TABLESPACE USERS
+    DATAFILE SIZE  500M
+    undo tablespace UNDOTBS1 DATAFILE SIZE 1G AUTOEXTEND OFF
+noarchivelog;
+
+
+CREATE TABLESPACE DBA_MAINTENANCE_TBS DATAFILE SIZE 1G AUTOEXTEND OFF
+    EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+    LOGGING ONLINE SEGMENT SPACE MANAGEMENT AUTO;
++DATA/PDS/CONTROLFILE/current.256.1039452401, +DATA/PDS/CONTROLFILE/current.257.1039452401
+                                                 , +DATA/PDS/CONTROLFILE/current.258.1039452401
+create undo tablespace UNDOTBS2 DATAFILE SIZE 6G AUTOEXTEND OFF;

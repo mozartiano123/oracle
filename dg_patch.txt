@@ -1,0 +1,137 @@
+APlicar patch 33797761
+========================================
+Enviar mail de aviso de intervenção
+-----------------------------------
+From: 
+To: support.dba.emis <support.dba.emis@timestamp.pt>, GD Acompanhamento DBA <acompanhamentodba.dti@emis.co.ao>
+Subject: EMIS | Intervenção WAY4DGC
+Boa tarde,
+ 
+Irá ser realizada uma intervenção para aplicação de um patch na WAY4DGC. Podem por isso ignorar eventuais alarmes até informação em contrário.
+ 
+Cumprimentos,
+ 
+
+login em prdw4dgrc1c 
+--------------------
+
+ssh oracle@prdw4dgrc1c
+
+Carregar environment
+--------------------
+WAY4DGC1
+
+Confirmar role de physical standby
+--------------------
+sqlplus / as sysdba <<EOF
+select DB_UNIQUE_NAME,name,database_role from v\$database;
+EOF
+
+
+DB_UNIQUE_NAME                 NAME      DATABASE_ROLE
+------------------------------ --------- ----------------
+WAY4DGC                       WAY4DGC      PHYSICAL STANDBY
+
+Criar  blackout
+--------------------
+
+prdw4dgrc1c
+cd /u01/agent_12105/agent_inst && ./emctl start blackout PATCH_APPLY_prdw4dgrc1c_$(date "+%Y_%m_%d") -nodeLevel  && ./emctl status blackout
+
+prdw4dgrc2c
+cd /u01/agent_12105/agent_inst && ./emctl start blackout PATCH_APPLY_prdw4dgrc2c_$(date "+%Y_%m_%d") -nodeLevel  && ./emctl status blackout
+
+Aplicar patches
+=================================
+
+=>Parar instância 2
+srvctl stop instance -d WAY4DGC -i WAY4DGC2
+srvctl status instance -d WAY4DGC -i WAY4DGC2
+
+
+=>Rollback do patch 32466971  e 31747989 se estiverem instalados
+ssh oracle@prdw4dgrc2c
+opatch rollback -id 32466971 -local
+opatch rollback -id 31747989 -local
+
+
+=>Instalação do patch 33797761
+cd ~/patches/33797761
+opatch apply -local
+
+=>Levantar instância 2
+
+srvctl start instance -d WAY4DGC -i WAY4DGC2
+srvctl status instance -d WAY4DGC -i WAY4DGC2
+
+
+=>Parar instância 1
+srvctl stop instance -d WAY4DGC -i WAY4DGC1
+srvctl status instance -d WAY4DGC -i WAY4DGC1
+
+=>Rollback do patch 32466971  e 31747989
+ssh oracle@prdw4dgrc1c
+opatch rollback -id 32466971 -local
+opatch rollback -id 31747989 -local
+
+=>Instalação do patch 33797761
+cd ~/patches/33797761
+opatch apply -local
+
+
+=>Levantar instância 1
+srvctl start instance -d WAY4DGC -i WAY4DGC1
+srvctl status database -d WAY4DGC 
+
+Confirmar role e status
+--------------------
+sqlplus / as sysdba <<EOF
+select DB_UNIQUE_NAME,name,database_role from v\$database;
+select instance_name,status from gv\$instance;
+EOF
+
+=>Habilitar DRM
+sqlplus / as sysdba
+ALTER SYSTEM RESET "_lm_drm_disable" SCOPE=BOTH SID='*'; 
+
+
+
+
+=================================
+
+
+Eliminar Blackout
+--------------------
+
+prdw4dgrc1c
+cd /u01/oraAgent/agent_inst/bin/
+./emctl status blackout | grep "Blackoutname" | awk -F= '{print $2}'
+
+./emctl stop blackout <valor devolvido no passo anterior>  && ./emctl status blackout
+
+prdw4dgrc2c
+cd /u01/oraAgent/agent_inst/bin/
+./emctl status blackout | grep "Blackoutname" | awk -F= '{print $2}'
+./emctl stop blackout PATCH_APPLY_prdw4dgrc2c_2022_02_17   && ./emctl status blackout
+
+
+
+
+
+
+Log:
+=====
+
+## Registar aqui os comandos e output da execução
+
+
+
+
+
+
+
+
+
+
+
+

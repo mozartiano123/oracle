@@ -1,0 +1,102 @@
+doc de relink feito
+step 01 ===>> Change de datapoint to fix window.
+
+step 02 ===>> check if have any transaction running
+
+set pages 999 lines 300 
+col username for a12
+col event for a23
+col program for a27
+col machine for a17 
+col osuser for a14
+col process for a10
+select inst_id,username, sid,serial#, machine, program, osuser, event, sql_id, status,ROUND(last_call_et/60,1) as last_call_min
+from gv$session
+where username is not null 
+and status='ACTIVE' 
+and event<>'class slave wait'
+order by LAST_CALL_MIN desc; 
+
+Step 03 ========>> check the process that running into database
+ps -ef | grep oracle
+
+example:
+
+oracle 15715 1 0 Aug19 ? 00:07:58 /oracle/g01/software/rdbms/11.2.0.3/bin/tnslsnr listener -inherit
+root 30823 30769 0 18:03 pts/0 00:00:00 sudo su - oracle
+root 30824 30823 0 18:03 pts/0 00:00:00 su - oracle
+oracle 30825 30824 0 18:03 pts/0 00:00:00 -ksh
+oracle 32304 30825 0 18:10 pts/0 00:00:00 ps -ef
+oracle 32305 30825 0 18:10 pts/0 00:00:00 grep oracle
+
+step 04 ========>> Shutdown the database to OS path.
+
+srvctl stop database -d SACP401 (shutdown immediate; (for each instance)) - RAC
+
+step 05 =====>> stop the listener (login as ASM for each instance)
+
+lsnrctl stop / lsnrctl start
+
+step 06 ========>> Stop CRS and UNLOCK
+
+#Standalone: 
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.3/crs/install/roothas.pl -unlock"
+#RAC: 
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.3/crs/install/rootcrs.pl -unlock"
+
+step 07 ====> disable the CRS
+
+#Standalone
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.3/bin/crsctl disable has" 
+#RAC
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.3/bin/crsctl enable crs"
+
+========== relink the binary
+check if 
+- Shutdown listeners 
+- Shutdown databases 
+
+step 08 ====> RELINK 
+
+- check if the oracle ASMLIB ( ASM instance )
+  ./oracleasm status
+  Checking if ASM is loaded: no
+  Checking if /dev/oracleasm is mounted: no
+
+  NOTE: The ASMLIB should be UP and MOUNTED
+
+# Run in both environment: ASM and RDBMS  
+# ASM
+export ORACLE_HOME=/oracle/g01/software/grid/11.2.0.2
+# RDBMS
+export ORACLE_HOME=/oracle/g01/software/rdbms/11.2.0.2
+
+cd $ORACLE_HOME
+umask 022
+- Make sure you don't have any instances running which share the same home getting relinked. (ps -ef | grep oracle)
+relinktime=`date -u '+%Y-%m-%d-%H-%M-%S'` 
+touch relink_$relinktime.log 
+relink all 1>>relink_$relinktime.log 2>>relink_$relinktime.log 
+    PS: should return no hits. waiting for 5 minutes or more
+cat relink_$relinktime.log | grep -i fatal 
+
+- move to your user home
+#Standalone
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.2/crs/install/roothas.pl -patch"
+#RAC
+sudo su - root -c "/oracle/g01/software/grid/11.2.0.2/crs/install/rootcrs.pl -patch"
+
+cat relink_$relinktime.log
+
+- startup listeners: lsnrctl start ( if not started / checking sctl stat res -t )
+- startup database: srvctl start database -d SACP401
+- check the alert_log
+
+
+Step 09 ====> Monitoring the session
+
+select inst_id, status,count(*)
+from gv$session g
+where g.username is not null and g.username not in ('SYS','SYSTEM')
+GROUP BY inst_id, status order by 1
+/

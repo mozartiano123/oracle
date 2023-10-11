@@ -1,0 +1,68 @@
+SQL_ID 746r2sudjf0pw
+--------------------
+CREATE TABLE cbs2685_prefinal TABLESPACE U8EL_DATA PCTFREE 0
+STORAGE (INITIAL 50M NEXT 50M PCTINCREASE 0) nologging PARALLEL (degree 8) AS
+SELECT a.*,
+       b.ptn,
+       c.serial_no
+FROM cbs2685_crdt_chrg_offst a,
+     subscriber_rsource b,
+     cbs2685_dev_hist c
+WHERE NOT (EXISTS
+             (SELECT 1
+              FROM cbs2685_exclude_2651 b
+              WHERE a.ban=b.ban
+                AND a.subscriber_no=a.subscriber_no )
+           OR EXISTS
+             (SELECT 1
+              FROM cbs2685_exclude_2686 b
+              WHERE a.ban=b.ban
+                AND a.subscriber_no=a.subscriber_no)
+           OR EXISTS
+             (SELECT 1
+              FROM cbs2685_exclude_2698 b
+              WHERE a.ban=b.ban
+                AND a.subscriber_no=a.subscriber_no))
+  AND NOT EXISTS
+    (SELECT 1
+     FROM cbs2685_history h
+     WHERE h.ban = a.ban
+       AND h.subscriber_no = a.subscriber_no
+       AND h.loan_install_no = a.loan_install_no )
+  AND NOT EXISTS
+    (SELECT 1
+     FROM cbs2685_history h
+     WHERE h.ban = a.ban
+       AND h.loan_seq_no = a.loan_seq_no
+       AND h.loan_install_no = a.loan_install_no )
+  AND NOT EXISTS
+    (SELECT 1
+     FROM cbs2711_history h
+     WHERE h.ban = a.ban
+       AND h.loan_seq_no = a.loan_seq_no)
+
+
+
+
+SQL_ID a3px049hc009t
+--------------------
+CREATE TABLE cbs2538_pay_arr_memo TABLESPACE U8EL_DATA PCTFREE 0
+STORAGE (INITIAL 50M NEXT 50M PCTINCREASE 0) nologging PARALLEL (degree 12) AS
+SELECT /*+ full(a) parallel(a,12) full(b) parallel(b,12) */ DISTINCT a.ban,
+    a.touchpoint,
+    a.subtopic,
+    a.topic,
+    a.start_date,
+    a.end_date,
+    a.interaction_id,
+    a.subscriber_no,
+    a.ptn,
+    a.account_type,
+    a.account_sub_type,
+    a.ban_status,
+    b.memo_id,
+    upper(b.memo_system_txt) AS memo_system_txt
+FROM cbs2538_pay_arrangement a,
+     memo b
+WHERE a.ban = b.memo_ban
+  AND a.interaction_id = b.interaction_id

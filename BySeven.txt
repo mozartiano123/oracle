@@ -1,0 +1,196 @@
+BySeven
+
+
+TUPY-MX-SRTLSLW0449-GIS2
+
+Ip acesso TUPY México - Bridge - Jump Server
+
+root@10.71.1.150
+
+Pi6re=@3YS(D
+
+root@172.16.102.84 [root@srpljoi-0258]
+
+
+adminedias - 8YsEv3N!T2021
+
+Tupy 515 - sudo -i -u orahrt
+
+1150073
+
+
+
+
+
+
+TUPY-MX-ERPDB1-GIS1
+N/A	
+HIGH
+Existem requests executando por mais de 30 minutos em TUPY-MX-ERPDB1-GIS1
+08/04/2021 14:21:02	 				
+TUPY-MX-ERPDB1-GIS1
+N/A	
+AVERAGE
+Mailler Pending On TUPY-MX-ERPDB1-GIS1
+08/04/2021 13:00:03	 				
+TUPY-SRPAJOI-0532-HRP001
+MCT	
+AVERAGE
+Low Free Swap Space On TUPY-SRPAJOI-0532-HRP001
+03/04/2021 01:03:41					
+TUPY-MX-RHDB1-GISHR1
+N/A	
+AVERAGE
+PGA Hit Ratio Is Low On on TUPY-RHDB1-GISHR1
+08/03/2021 09:57:45	 				
+TUPY-SRDAJOI-0504
+DEV	
+AVERAGE
+Low free memory on TUPY-SRDAJOI-0504
+12/02/2021 23:34:38					
+TUPY-SRDAJOI-0505-HRD
+
+
+
+-- to stop start zabbix . as root
+/opt/seven/orabbix
+
+
+-- para alguns clientes trocar o 10.0.0 por 10.253.30.
+
+
+
+-- Milium. Usar VPN
+
+192.168.25.113
+
+
+root	s3v3n14
+
+
+10.11.0.189
+s3v3n14
+
+
+1152407
+
+@2j&JWrTLcW#
+
+
+[kkqjpdInsFroNoDup()+64]
+
+
+EBS
+
+sh ss.sh dbconc
+sh ss.sh filaconc
+
+select count(*),cwr.user_concurrent_program_name,cq.user_concurrent_queue_name FROM apps.fnd_concurrent_worker_requests cwr, apps.fnd_concurrent_queues_tl cq, apps.fnd_user fu
+WHERE (cwr.phase_code = 'P' OR cwr.phase_code = 'R')   AND cwr.hold_flag != 'Y'   AND cwr.requested_start_date <= SYSDATE
+AND cwr.concurrent_queue_id = cq.concurrent_queue_id   AND cwr.queue_application_id = cq.application_id  and cq.LANGUAGE='US'
+AND cwr.requested_by = fu.user_id
+and cq.user_concurrent_queue_name in ( 'Conflict Resolution Manager')
+group by cwr.user_concurrent_program_name,cq.user_concurrent_queue_name;
+
+
+
+-- GRPCON
+
+-- log do oda
+tail -1000f /opt/oracle/oak/log/$( hostname -s )/oak/oakd.log
+
+
+
+-- BERLANDA
+177.85.119.45
+FaiP2e1@SB%Ora2019
+
+10.99.0.99   
+ahKek6ug@201%%
+
+-- CDF
+
+VPN SOPHOS
+byseven
+CD2019NewPPP@
+
+
+
+@?/
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+dm-30             0.00     0.05    0.27    0.19    36.87   264.98  1317.49     0.02   34.13    1.98   78.82   0.33   0.02
+dm-31             0.00     0.00    0.27    0.24    36.87   264.98  1187.50     0.02   39.12    1.99   80.30   0.30   0.02
+dm-32             0.00     0.03    0.02    0.10    11.91   366.48  6252.84     0.00   31.99   12.10   36.61   0.79   0.01
+dm-33             0.50     0.30    2.34    1.13  1413.39  1861.61  1889.47     0.07   19.90   10.94   38.45   1.59   0.55
+dm-34             0.00     0.00    2.84    1.43  1413.39  1861.61  1535.15     0.09   21.75   11.38   42.40   1.29   0.55
+dm-35             0.16     0.01    5.86    0.88   254.24    56.43    92.20     0.07   10.30    6.56   35.18   2.37   1.60
+dm-36             0.15     0.01    5.67    0.88   251.21    56.81    94.08     0.07   10.35    6.64   34.36   2.43   1.59
+dm-37             0.15     0.00    5.66    0.87   249.92    56.56    93.89     0.07   11.11    6.95   38.36   2.45   1.60
+dm-38             0.15     0.01    5.38    0.85   245.93    56.29    97.07     0.06    9.77    5.25   38.56   2.21   1.38
+dm-39             0.15     0.01    5.98    0.87   255.68    56.66    91.20     0.06    8.41    4.19   37.40   1.93   1.32
+dm-40             0.16     0.01    5.77    0.88   252.44    56.77    93.01     0.07   10.42    6.66   35.17   2.40   1.60
+dm-41             0.15     0.01    5.64    0.88   250.73    56.91    94.38     0.07   10.92    6.83   37.07   2.44   1.59
+dm-42             0.15     0.01    5.60    0.88   249.55    56.80    94.67     0.07   10.80    6.86   35.99   2.47   1.60
+dm-43             0.15     0.01    5.94    0.90   255.29    56.99    91.31     0.07   10.49    6.60   36.34   2.35   1.61
+dm-44             0.15     0.01    5.38    0.85   244.69    56.41    96.68     0.07   11.12    7.10   36.61   2.52   1.57
+dm-45             0.16     0.00    5.48    0.85   247.22    56.39    95.90     0.07   11.19    7.01   38.05   2.48   1.57
+dm-46             0.15     0.01    5.78    0.86   252.21    56.49    93.08     0.07   10.73    6.81   37.22   2.42   1.61
+
+
+begin
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TE301TCR');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TE650SLC');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TLOGE000CIX');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_E120LOGBLOQUEIO');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TANAREP');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TPENDTITULO');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TE210EST');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TPENDCLI');
+DBMS_STATS.UNLOCK_TABLE_STATS('SAPIENSPRD','USU_TMON135PES');
+end;
+/
+
+
+
+
+
+
+zabbix - log switch interval.
+
+"/* QUERY_LOG_SWITCH_INTERVAL */ 
+        SELECT  MIN(AVG_SECONDS) AS SECONDS 
+         FROM    ( 
+                     SELECT  TRUNC(AVG(SECONDS)) AS AVG_SECONDS 
+                     FROM    ( 
+                                 SELECT  THREAD#, 
+                                         LINHA, 
+                                         ROUND((NEXT_TIME - FIRST_TIME) * 24 * 50 * 60) AS SECONDS 
+                                 FROM    ( 
+                                             SELECT  THREAD#, 
+                                                     L.FIRST_TIME, 
+                                                     LEAD(L.FIRST_TIME) OVER (PARTITION BY THREAD# ORDER BY SEQUENCE#) AS NEXT_TIME, 
+                                                     ROW_NUMBER() OVER (PARTITION BY THREAD# ORDER BY SEQUENCE#) AS LINHA 
+                                             FROM    GV$LOG L 
+                                             WHERE   L.INST_ID = ( 
+                                                                     SELECT  INSTANCE_NUMBER 
+                                                                     FROM    V$INSTANCE 
+                                                                 ) 
+                                             AND     NOT EXISTS  ( 
+                                                                     SELECT  1 
+                                                                     FROM    GV$LOGFILE LF 
+                                                                     WHERE   LF.INST_ID  =   L.INST_ID 
+                                                                     AND     LF.GROUP#   =   L.GROUP# 
+                                                                     AND     LF.TYPE     =  'STANDBY' 
+                                                                 ) 
+                                         ) LOG 
+                                 WHERE       NEXT_TIME   IS  NOT NULL 
+                                 AND         LINHA       <=  3 
+                                 ORDER BY    THREAD#, FIRST_TIME DESC 
+                             ) 
+                     GROUP BY THREAD# 
+                 )
+
+
+
+

@@ -1,0 +1,293 @@
+
+ select OWNER, TABLE_NAME, PARTITION_NAME, NUM_ROWS, STALE_STATS, LAST_ANALYZED, AVG_ROW_LEN*NUM_ROWS as obj_size
+ from dba_tab_statistics 
+ where owner='PRPDADM' and table_name='PK_ACCT_MAINT_ACTIVITY' order by partition_position;
+
+select OWNER, INDEX_NAME, PARTITION_NAME, NUM_ROWS, STALE_STATS, LAST_ANALYZED, CLUSTERING_FACTOR
+from dba_ind_statistics 
+where owner='PRPDADM' and index_name='PK_ACCT_MAINT_ACTIVITY' order by partition_position;
+
+
+col name heading 'Index Name' format a30
+col del_lf_rows heading 'Deleted|Leaf Rows' format 99999999
+col lf_rows_used heading 'Used|Leaf Rows' format 99999999
+col ratio heading '% Deleted|Leaf Rows' format 999.99999
+
+SELECT name,
+del_lf_rows,
+lf_rows - del_lf_rows lf_rows_used,
+to_char(del_lf_rows / (lf_rows)*100,'999.99999') ratio
+FROM index_stats
+where name = upper('PK_ACCT_MAINT_ACTIVITY');
+
+
+Stats
+
+-- SYS STATS
+
+
+-- check
+
+SELECT * FROM SYS.AUX_STATS$
+/
+
+-- export
+
+begin
+
+dbms_stats.CREATE_STAT_TABLE( ownname=>'OEMADM'
+                             , stattab=>'SYS_STATS_may7'
+                              );
+end;
+/
+
+begin
+
+dbms_stats.export_system_stats( ownname=>'OEMADM',
+  stattab=>'SYS_STATS_may7' , statid=>'CURRENT_STATS'
+                                );
+end;
+/
+
+-- collect
+
+exec  dbms_stats.gather_system_stats();
+
+-- import in case of bad stats
+
+begin
+  dbms_stats.import_system_stats( stattab=>'SYS_STATS_30ma'
+                                , statid=>'CURRENT_STATS'
+                                );
+end;
+/
+
+
+
+-- DICTIONARY
+
+
+-- check
+
+SELECT * FROM SYS.AUX_STATS$
+/
+
+-- export
+
+begin
+
+dbms_stats.CREATE_STAT_TABLE( ownname=>user
+                             , stattab=>'DICT_STATS_30mar'
+                              );
+end;
+/
+
+begin
+
+dbms_stats.export_dictionary_stats( stattab=>'DICT_STATS_30mar'
+                                , statid=>'CURRENT_STATS'
+                                );
+end;
+/
+
+-- table stats.
+
+--create stats table
+
+exec dbms_stats.create_stat_table(ownname=>'OEMADM',stattab=>'table_stats_may7');
+exec dbms_stats.create_stat_table(ownname=>'SYSTEM',stattab=>'ARCH_STAT');
+exec dbms_stats.create_stat_table(ownname=>'SYSTEM',stattab=>'NGS_STAT');
+
+-- export
+
+exec dbms_stats.export_table_stats(ownname=>'OEMADM', statown=>'OEMADM', tabname=>'FRAUD_ORDER_ACTION',stattab=>'table_stats_may7'); 
+exec dbms_stats.export_table_stats(ownname=>'OVMADM', statown=>'SYSTEM', tabname=>'DCM_REQ_RES_INFO',stattab=>'OVM_STAT'); 
+exec dbms_stats.export_table_stats(ownname=>'OVMARCH', statown=>'SYSTEM', tabname=>'OVM_REQ_RES_INFO',stattab=>'ARCH_STAT'); 
+exec dbms_stats.export_table_stats(ownname=>'OVMARCH', statown=>'SYSTEM', tabname=>'DCM_REQ_RES_INFO',stattab=>'ARCH_STAT'); 
+exec dbms_stats.export_table_stats(ownname=>'NGS', statown=>'SYSTEM', tabname=>'MANAGE_CART',stattab=>'NGS_STAT'); 
+
+
+-- restore
+
+exec DBMS_STATS.RESTORE_TABLE_STATS (ownname=>'OEMADM', tabname=>'FRAUD_ORDER_ACTION', as_of_timestamp=>to_timestamp('07-may-18 15:29:18','dd-mon-yy hh24:mi:ss'), force=>TRUE);
+
+-- collect
+
+begin
+
+dbms_stats.gather_dictionary_stats(ESTIMATE_PERCENT => DBMS_STATS.AUTO_SAMPLE_SIZE, 
+		METHOD_OPT => 'FOR ALL COLUMNS SIZE 1');
+
+end;
+/
+
+-- import in case of bad stats
+
+begin
+  dbms_stats.import_system_stats( stattab=>'DICT_STATS_30ma'
+                                , statid=>'CURRENT_STATS'
+                                );
+end;
+/
+
+
+-- Show locked stats 
+
+SELECT TABLE_NAME FROM DBA_TAB_STATISTICS WHERE STATTYPE_LOCKED = 'ALL' ;
+
+-- unlock
+
+execute DBMS_STATS.UNLOCK_TABLE_STATS('OEMADM','ORDER_MASTER');
+execute DBMS_STATS.UNLOCK_TABLE_STATS('OEMARCH','ORDER_MASTER');
+execute DBMS_STATS.UNLOCK_TABLE_STATS('OEMARCH_STG','ORDER_MASTER');
+
+-- lock
+
+execute DBMS_STATS.LOCK_TABLE_STATS('NXTAPPO','ATB_HISTORY_C');
+execute DBMS_STATS.LOCK_TABLE_STATS('NXTAPPONRT','ATB_HISTORY_C');
+
+
+exec DBMS_STATS.GATHER_TABLE_STATS(OWNNAME => 'NXTAPPONRT', TABNAME => 'ATB_HISTORY_C', estimate_percent =>dbms_stats.auto_sample_size, CASCADE =>TRUE, method_opt => 'FOR ALL COLUMNS SIZE 1', DEGREE=>24, no_invalidate=>false);
+
+exec DBMS_STATS.GATHER_TABLE_STATS(OWNNAME => 'NXTSECO', TABNAME => 'USERS', PARTNAME =>'MEMO_P47', estimate_percent =>dbms_stats.auto_sample_size, CASCADE =>TRUE, method_opt => 'FOR ALL COLUMNS SIZE 1', DEGREE=>16, no_invalidate=>false);
+
+exec DBMS_STATS.GATHER_TABLE_STATS(OWNNAME => 'NXTSECO', TABNAME => 'USERS', estimate_percent =>dbms_stats.auto_sample_size, CASCADE =>TRUE, method_opt => 'FOR ALL COLUMNS SIZE 1', DEGREE=>16, no_invalidate=>false);
+
+
+
+exec DBMS_STATS.GATHER_INDEX_STATS(OWNNAME => 'SA_CMDSNRT', INDNAME => 'TOPIC_OBJINDEX', estimate_percent =>dbms_stats.auto_sample_size, DEGREE=>16, no_invalidate=>false);
+
+
+-- EXTENDED STATS
+
+dbms_stats.create_extended_stats('SH','CUSTOMERS','(CUST_CITY,CUST_STATE_PROVINCE,COUNTRY_ID)');
+
+
+dbms_stats.show_extended_stats_name ('SH','CUSTOMERS','(CUST_CITY,CUST_STATE_PROVINCE,COUNTRY_ID)');
+
+
+exec dbms_stats.drop_extended_stats('sh','customers','(CUST_CITY,CUST_STATE_PROVINCE,COUNTRY_ID)');
+
+exec dbms_stats.gather_table_stats('sh','exp_test',-
+method_opt=>'for all columns size 1 for columns (mod(Nid,10)) size 3');
+
+
+
+
+PL/SQL to export stats.
+
+set echo off feedback off
+set lin 200 pages 999
+set serveroutput on
+spool export_tbl_stats.sql
+
+DECLARE
+
+cursor c1 is select owner, segment_name from dba_segments where segment_name not in 
+(
+'IDENT_ADDRESS_INFO','ORDER_CREDIT_CHECK_INFO','ORDER_MASTER','ORDER_PAYMENTS','OVM_SERVICE_REQUEST_INFO','INVENTORY_ITEM'
+)
+and tablespace_name in ('WDATA03','WDATA22')
+and segment_type='TABLE'
+order by segment_name;
+
+v1 c1%rowtype;
+a varchar2(4000);
+b varchar2(4000);
+c varchar2(4000);
+
+BEGIN
+
+dbms_output.put_line('set lin 200 pages 9999 echo on timing on');
+dbms_output.put_line('alter session set ddl_lock_timeout=60;');
+dbms_output.put_line('alter session set nls_date_format=''dd-mon-yy hh24:mi:ss''');
+dbms_output.put_line(chr(10));
+dbms_output.put_line('spool export_tbl_stats.log');
+dbms_output.put_line(chr(10));
+
+FOR v1 in c1
+  LOOP
+
+    a := 'exec dbms_stats.create_stat_table(ownname=>''SYSTEM'', stattab=>''STBL_' || substr(v1.segment_name,1,25) || ''', tblspace=>''STATS_TMP_TBS'');';
+    b := 'exec dbms_stats.export_table_stats(ownname=>'''|| v1.owner || ''', statown=>''SYSTEM'', tabname=>''' || v1.segment_name ; 
+    b := b || ''', stattab=>''STBL_'|| substr(v1.segment_name,1,25) || ''');';
+
+    dbms_output.put_line(chr(10));
+    dbms_output.put_line(a);
+    dbms_output.put_line(b);
+
+  END LOOP;
+
+  dbms_output.put_line(chr(10));
+  dbms_output.put_line('spool off');
+  dbms_output.put_line('exit;');
+
+END;
+/
+
+spool off;
+exit;
+
+
+
+set echo off feedback off
+set lin 200 pages 999
+set serveroutput on
+spool export_tbl_stats.sql
+
+DECLARE
+
+cursor c1 is select owner, segment_name from dba_segments where segment_name not in 
+(
+'IDENT_ADDRESS_INFO','ORDER_CREDIT_CHECK_INFO','ORDER_MASTER','ORDER_PAYMENTS','OVM_SERVICE_REQUEST_INFO','INVENTORY_ITEM'
+)
+and tablespace_name in ('WDATA03','WDATA22')
+and segment_type='TABLE'
+order by segment_name;
+
+v1 c1%rowtype;
+a varchar2(4000);
+b date ; 
+
+BEGIN
+
+dbms_output.put_line('set lin 200 pages 9999 echo on timing on');
+dbms_output.put_line('alter session set ddl_lock_timeout=60;');
+dbms_output.put_line('alter session set nls_date_format=''dd-mon-yy hh24:mi:ss''');
+dbms_output.put_line(chr(10));
+dbms_output.put_line('spool import_tbl_stats.log');
+dbms_output.put_line(chr(10));
+
+FOR v1 in c1
+  LOOP
+
+       
+    a := 'exec dbms_stats.import_table_stats(ownname=>'''|| v1.owner || ''', statown=>''SYSTEM'', tabname=>''' || v1.segment_name ; 
+    a := a || ''', stattab=>''STBL_'|| substr(v1.segment_name,1,25) || ''', cascade=>TRUE);';
+    
+    dbms_output.put_line(chr(10));
+    dbms_output.put_line(a);
+    dbms_output.put_line(b);
+
+  END LOOP;
+
+  dbms_output.put_line(chr(10));
+  dbms_output.put_line('spool off');
+  dbms_output.put_line('exit;');
+
+END;
+/
+
+spool off;
+exit;
+
+
+
+-- SCHEMA
+
+EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS(ownname => 'BRITEBILL', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, DEGREE=>24);
+EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS(ownname => 'DS_STAGE1', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, DEGREE=>8);
+
+
+EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS(ownname => 'DS_STAGE2', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, DEGREE=>8);
+EXECUTE DBMS_STATS.GATHER_SCHEMA_STATS(ownname => 'DS_STAGE3', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, DEGREE=>8);
