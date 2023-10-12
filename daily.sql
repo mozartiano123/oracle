@@ -15862,7 +15862,7 @@ aws dynamodb put-item \
     --return-consumed-capacity TOTAL
     0- Configurar acesso ao AWS
       C:\Users\AlexanderDavidsonBuf>aws configure
-        AWS Access Key ID [None]: AKIAYMK4MPYT3A6XVZNS
+        AWS Access Key ID [None]: 
         AWS Secret Access Key [None]: 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
         Default region name [None]: us-west-2
         Default output format [None]: json
